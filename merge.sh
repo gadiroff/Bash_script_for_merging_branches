@@ -1,15 +1,27 @@
 #!/bin/bash
 
-branch="release/v"
-array_=()
-list=`git branch`
-j=0
-for i in $list; do
-        if [ "$branch = ${i[@]::9}" -a ${i[@]: -1} -ne 0 ]; then
+git config --global user.name "teamcity-agent"
+git config --global user.email "teamcity.agent@test.com"
+echo "Host *" > ~/.ssh/config
+echo "    StrictHostKeyChecking no" >> ~/.ssh/config
+echo "IdentityFile ~/.ssh/id_rsa" >> ~/.ssh/config
+
+git fetch
+a="origin/release"
+list_1=`git branch -r`
+count=0
+for t in $list_1; do
+        if [ ${t[@]::14} = $a ]; then
+                array_[$count]=$t
+                count=$(( $count + 1 ))
+        fi
+done
+for i in ${array_[@]}; do
+        if [ "${i[@]: -1} -ne 0" ]; then
                 count=${i[@]: -1}
                 array_[$count]=$i
                 j=$(( $j + 1))
-        elif [ "$branch = ${i[@]::9}" -a "${i[@]: -1} -eq 0" ]; then
+        elif [ ${i[@]: -1} -eq 0 ]; then
                 count=${i[@]: -2}
                 array_[$count]=$i
                 j=$(( $j + 1))
@@ -18,25 +30,29 @@ done
 current_release_branch=${array_[@]: -1}
 current_count=`echo  ${current_release_branch[@]: -1}`
 new_count=$(( $current_count + 1 ))
-if [ "$current_count -ne 0" -a  "${#current_release_branch} = 12"  ]; then
-        new_release_branch=`echo "$current_release_branch"  | sed s/./$new_count/12`
-        echo "New release branch is: $new_release_branch"
-elif [  "$current_count -eq 0" -a  "${#current_release_branch} = 13" ]; then
+if [ "$current_count -ne 0" -a  "${#current_release_branch} = 19"  ]; then
+        new_release_branch=`echo "$current_release_branch"  | sed s/./$new_count/19`
+elif [  "$current_count -eq 0" -a  "${#current_release_branch} = 20" ]; then
         new_count=1
-        new_release_branch=`echo "$current_release_branch"  | sed s/./$new_count/13`
-        echo $new_release_branch
-elif [ "$current_count -ne 0" -a  "${#current_release_branch} = 13" -a "$current_count -ne 9"  ]; then
-        new_release_branch=`echo "$current_release_branch"  | sed s/./$new_count/13`
-        echo "New release branch is: $new_release_branch"
-elif [ "$current_count -eq 9" -a  "${#current_release_branch} = 13"  ]; then
-        count12="${current_release_branch[@]:11:1}"
-        echo $count12
-        new_release_branch=`echo "$current_release_branch"  | sed s/./$(( $count12 + 1 ))/12 | sed s/./0/13`
-        echo "New release branch is: $new_release_branch"
+        new_release_branch=`echo "$current_release_branch"  | sed s/./$new_count/20`
+elif [ "$current_count -ne 0" -a  "${#current_release_branch} = 20" -a "$current_count -ne 9"  ]; then
+        new_release_branch=`echo "$current_release_branch"  | sed s/./$new_count/20`
+elif [ "$current_count -eq 9" -a  "${#current_release_branch} = 20"  ]; then
+        count19="${current_release_branch[@]:18:1}"
+        new_release_branch=`echo "$current_release_branch"  | sed s/./$(( $count19 + 1 ))/19 | sed s/./0/20`
 fi
+if [ ${#new_release_branch} = 19 ]; then
+        new_release_branch=${new_release_branch[@]: -12}
+        tag_vers=${new_release_branch[@]: -5}
+else
+        new_release_branch=${new_release_branch[@]: -13}
+        tag_vers=${new_release_branch[@]: -6}
+fi
+
+echo "New Release Branch iS:  $new_release_branch"
 commit_merge01="Merge $current_release_branch branch to master branch."
 commit_merge02="Merge master branch to develop branch."
-tag="$current_release_branch"
+tag="r$tag_vers"
 
 git checkout  $current_release_branch
 git pull origin $current_release_branch
@@ -46,10 +62,12 @@ git merge -m "$commit_merge01" $current_release_branch
 git fetch --tags
 git tag $tag
 git push origin master
-git push -d origin $current_release_branch
-git branch -d $current_release_branch
+#git push -d origin $current_release_branch
+#git branch -d $current_release_branch
 git checkout develop
 git pull origin develop
 git merge -m "$commit_merge02" master
+git push origin develop
+echo " Master merged to develop"
 git checkout -b $new_release_branch
 git push --set-upstream origin $new_release_branch

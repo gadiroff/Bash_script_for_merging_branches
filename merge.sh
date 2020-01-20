@@ -1,7 +1,7 @@
 #!/bin/bash
 
-git config --global user.name "teamcity-agent"
-git config --global user.email "teamcity.agent@test.com"
+git config --global user.name "jeyhun-gadirov"
+git config --global user.email "jeyhun.gadirov@test.com"
 echo "Host *" > ~/.ssh/config
 echo "    StrictHostKeyChecking no" >> ~/.ssh/config
 echo "IdentityFile ~/.ssh/id_rsa" >> ~/.ssh/config
@@ -41,15 +41,26 @@ elif [ "$current_count -eq 9" -a  "${#current_release_branch} = 20"  ]; then
         count19="${current_release_branch[@]:18:1}"
         new_release_branch=`echo "$current_release_branch"  | sed s/./$(( $count19 + 1 ))/19 | sed s/./0/20`
 fi
+
 if [ ${#new_release_branch} = 19 ]; then
         new_release_branch=${new_release_branch[@]: -12}
-        tag_vers=${new_release_branch[@]: -5}
+        tag_vers=${current_release_branch[@]: -5}
 else
         new_release_branch=${new_release_branch[@]: -13}
-        tag_vers=${new_release_branch[@]: -6}
+        tag_vers=${current_release_branch[@]: -6}
 fi
 
-echo "New Release Branch iS:  $new_release_branch"
+
+if [ ${#current_release_branch} = 19 ]; then
+        current_release_branch=${current_release_branch[@]: -12}
+else
+        current_release_branch=${current_release_branch[@]: -13}
+fi
+
+
+remote_repo=$(git remote -v | head -n 1 | cut -f1)
+
+echo "New Release Branch is:  $new_release_branch"
 commit_merge01="Merge $current_release_branch branch to master branch."
 commit_merge02="Merge master branch to develop branch."
 tag="r$tag_vers"
@@ -64,10 +75,19 @@ git tag $tag
 git push origin master
 #git push -d origin $current_release_branch
 #git branch -d $current_release_branch
+git push $remote_repo $tag
 git checkout develop
 git pull origin develop
 git merge -m "$commit_merge02" master
 git push origin develop
 echo " Master merged to develop"
+-----------------------------------------------------------------------------------------------------------------------------
 git checkout -b $new_release_branch
+countt=$(echo " ${new_release_branch[@]: -1} ")
+PACKAGE_VERSION=$(cat package.json | grep version | head -1 | awk -F: '{ print $2 }' | sed 's/[\",]//g' | tr -d '[[:space:]]')
+NEW_VERSION="0.0.0"
+NEW_VERSION=$(echo $NEW_VERSION  | sed s/./$(( $countt + 0 ))/3 | sed s/./0/5)
+sed -i "s/\"version\": \"$PACKAGE_VERSION\"/\"version\": \"$NEW_VERSION\"/g" package.json
+git add package.json
+git commit -m "Icrease minor version of package.json file"
 git push --set-upstream origin $new_release_branch

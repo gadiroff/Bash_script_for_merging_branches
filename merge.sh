@@ -1,7 +1,7 @@
 #!/bin/bash
 
 git config --global user.name "jeyhun-gadirov"
-git config --global user.email "jeyhun.gadirov@test.com"
+git config --global user.email "jeyhun.gadirov@epicgames.com"
 echo "Host *" > ~/.ssh/config
 echo "    StrictHostKeyChecking no" >> ~/.ssh/config
 echo "IdentityFile ~/.ssh/id_rsa" >> ~/.ssh/config
@@ -84,10 +84,19 @@ echo " Master merged to develop"
 -----------------------------------------------------------------------------------------------------------------------------
 git checkout -b $new_release_branch
 countt=$(echo " ${new_release_branch[@]: -1} ")
+if [ $countt -ne 0 ];
+then
 PACKAGE_VERSION=$(cat package.json | grep version | head -1 | awk -F: '{ print $2 }' | sed 's/[\",]//g' | tr -d '[[:space:]]')
 NEW_VERSION="0.0.0"
 NEW_VERSION=$(echo $NEW_VERSION  | sed s/./$(( $countt + 0 ))/3 | sed s/./0/5)
 sed -i "s/\"version\": \"$PACKAGE_VERSION\"/\"version\": \"$NEW_VERSION\"/g" package.json
+else
+countt=$(echo " ${new_release_branch[@]: -2} ")
+PACKAGE_VERSION=$(cat package.json | grep version | head -1 | awk -F: '{ print $2 }' | sed 's/[\",]//g' | tr -d '[[:space:]]')
+NEW_VERSION="0.0.0"
+NEW_VERSION=$(echo $NEW_VERSION  | sed s/./$(( $countt + 0 ))/3 | sed s/./0/6)
+sed -i "s/\"version\": \"$PACKAGE_VERSION\"/\"version\": \"$NEW_VERSION\"/g" package.json
+fi;
 git add package.json
 git commit -m "Icrease minor version of package.json file"
 git push --set-upstream origin $new_release_branch

@@ -1,0 +1,21 @@
+#!/bin/bash
+echo "Host *" > ~/.ssh/config
+echo "    StrictHostKeyChecking no" >> ~/.ssh/config
+echo "IdentityFile ~/.ssh/id_rsa" >> ~/.ssh/config
+git config --global user.email "Jeyhun.Gadirov@gmail.com"
+git config --global user.name "Jeyhun Gadirov"
+
+
+
+CURRENT_RELEASE_BRANCH=%Current_release_branch%    ### %Current_release_branch%  is parameter in TeamCity  ( variable )
+
+
+
+commit_merge="Merge develop branch to $CURRENT_RELEASE_BRANCH branch."
+echo $commit_merge
+tag=$CURRENT_RELEASE_BRANCH
+git fetch
+git checkout $CURRENT_RELEASE_BRANCH
+git pull origin $CURRENT_RELEASE_BRANCH
+git merge develop
+echo "yes" | git push origin $CURRENT_RELEASE_BRANCH

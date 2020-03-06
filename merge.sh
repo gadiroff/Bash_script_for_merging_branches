@@ -1,7 +1,7 @@
 #!/bin/bash
 
 git config --global user.name "jeyhun-gadirov"
-git config --global user.email "jeyhun.gadirov@epicgames.com"
+git config --global user.email "jeyhun.gadirov@gmail.com"
 echo "Host *" > ~/.ssh/config
 echo "    StrictHostKeyChecking no" >> ~/.ssh/config
 echo "IdentityFile ~/.ssh/id_rsa" >> ~/.ssh/config
@@ -81,22 +81,48 @@ git pull origin develop
 git merge -m "$commit_merge02" master
 git push origin develop
 echo " Master merged to develop"
------------------------------------------------------------------------------------------------------------------------------
 git checkout -b $new_release_branch
-countt=$(echo " ${new_release_branch[@]: -1} ")
-if [ $countt -ne 0 ];
-then
-PACKAGE_VERSION=$(cat package.json | grep version | head -1 | awk -F: '{ print $2 }' | sed 's/[\",]//g' | tr -d '[[:space:]]')
-NEW_VERSION="0.0.0"
-NEW_VERSION=$(echo $NEW_VERSION  | sed s/./$(( $countt + 0 ))/3 | sed s/./0/5)
-sed -i "s/\"version\": \"$PACKAGE_VERSION\"/\"version\": \"$NEW_VERSION\"/g" package.json
-else
-countt=$(echo " ${new_release_branch[@]: -2} ")
-PACKAGE_VERSION=$(cat package.json | grep version | head -1 | awk -F: '{ print $2 }' | sed 's/[\",]//g' | tr -d '[[:space:]]')
-NEW_VERSION="0.0.0"
-NEW_VERSION=$(echo $NEW_VERSION  | sed s/./$(( $countt + 0 ))/3 | sed s/./0/6)
-sed -i "s/\"version\": \"$PACKAGE_VERSION\"/\"version\": \"$NEW_VERSION\"/g" package.json
-fi;
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+increase_version() {
+
+        count=$(echo ${new_release_branch[@]: -1})
+
+        if [ ${#new_release_branch} = 12 ]; then
+                PACKAGE_VERSION=$(cat package.json | grep version | head -1 | awk -F: '{ print $2 }' | sed 's/[\",]//g' | tr -d '[[:space:]]')
+                NEW_VERSION="0.0.0"
+                NEW_VERSION=$(echo $NEW_VERSION  | sed s/./$(( $count + 0 ))/3 | sed s/./0/5)
+                sed -i "s/\"version\": \"$PACKAGE_VERSION\"/\"version\": \"$NEW_VERSION\"/g" package.json
+
+        elif [ ${#new_release_branch} = 13 ]; then
+                count=$(echo ${new_release_branch[@]: -2})
+                count01="${count[@]: 0:1}"
+                count02="${count[@]: 1}"
+                PACKAGE_VERSION=$(cat package.json | grep version | head -1 | awk -F: '{ print $2 }' | sed 's/[\",]//g' | tr -d '[[:space:]]')
+                NEW_VERSION="0.00.0"
+                NEW_VERSION=$(echo $NEW_VERSION  | sed s/./$(( $count01 + 0 ))/3 | sed s/./$(( $count02 + 0 ))/4 | sed s/./0/6)
+                sed -i "s/\"version\": \"$PACKAGE_VERSION\"/\"version\": \"$NEW_VERSION\"/g" package.json
+
+
+        elif [ ${#new_release_branch} = 14 ]; then
+                count=$(echo ${new_release_branch[@]: -3})
+                count01="${count[@]: 0:1}"
+                count02="${count[@]: 1:-1}"
+                count03="${count[@]: -1}"
+                PACKAGE_VERSION=$(cat package.json | grep version | head -1 | awk -F: '{ print $2 }' | sed 's/[\",]//g' | tr -d '[[:space:]]')
+                NEW_VERSION="0.000.0"
+                NEW_VERSION=$(echo $NEW_VERSION  | sed s/./$(( $count01 + 0 ))/3 | sed s/./$(( $count02 + 0 ))/4 | sed s/./$(( $count03 + 0 ))/5 | sed s/./0/7)
+                sed -i "s/\"version\": \"$PACKAGE_VERSION\"/\"version\": \"$NEW_VERSION\"/g" package.json
+
+        fi;
+}
+
+increase_version
+
+
 git add package.json
 git commit -m "Icrease minor version of package.json file"
 git push --set-upstream origin $new_release_branch
